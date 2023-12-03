@@ -9,8 +9,14 @@ L = 5;
 % Sampling period
 Ts = 1e-2;
 
+numTrajectories = 1000;
+trajectories = zeros(numTrajectories, numSteps, 9);
+
+for i = 1:numTrajectories
 v_x = 20 * rand() + 15;
+% v_x = 25;
 R = 100 * (14 * rand() + 1);
+% R = 10000;
 phi_dot_des = v_x / R;
 
 A = [0, 1, 0, 0;
@@ -31,7 +37,6 @@ C = [1, 0, 0, 0;
 
 errorModel = ss(A, B_overall, C, 0);
 errorModel = setmpcsignals(errorModel, MV=1, MD=2);
-curvModel = ss(zeros(4),B_dist, zeros(1,4), 0);
 
 numSteps = 1000;
 maxSteer = pi / 6;
@@ -49,9 +54,9 @@ manipVars = struct('Min', -maxSteer, ...
                    'Name', 'Steering Angle', ...
                    'Units', 'Radians', ...
                    'ScaleFactor', 2 * maxSteer);
-weights = struct('ManipulatedVariables', 0.1, ...
-                 'ManipulatedVariablesRate', 10, ...
-                 'OutputVariables', [20, 0.05], ...
+weights = struct('ManipulatedVariables', 5, ...
+                 'ManipulatedVariablesRate', 100, ...
+                 'OutputVariables', [3, 1], ...
                  'ECR', 0.0001);
 outVars = [struct('Min', -latErrorThreshold/10, ...
                   'Max', latErrorThreshold/10, ...
@@ -65,8 +70,7 @@ outVars = [struct('Min', -latErrorThreshold/10, ...
                   'ScaleFactor', 2 * headingErrorThreshold)];
 distVars = struct('Name', 'Road Curvature Disturbance');
 
-mpcObj = mpc(errorModel, Ts, 100, 100, weights, manipVars, outVars, distVars)
-% setindist(mpcObj, 'model', curvModel);
+mpcObj = mpc(errorModel, Ts, 100, 100, weights, manipVars, outVars, distVars);
 
 controllerState = mpcstate(mpcObj);
 outputReference = [0, 0];
@@ -86,8 +90,18 @@ output = zeros(N, 2);
 input = zeros(N, 1);
 
 simOpts = mpcsimopt;
+
+
 simOpts.PlantInitialState = initialState;
-sim(mpcObj, numSteps, outputReference, phi_dot_des, simOpts);
+[mpcOutputs, mpcTimes, mpcInputs, mpcStates] = sim(mpcObj, numSteps, outputReference, phi_dot_des, simOpts);
+mpcPhiRate = v_x/R;
+mpcPrevInputs = [0; mpcInputs];
+mpcPrevInputs = mpcPrevInputs(1:end-1);
+trajectories(i, :, :) = [mpcStates, mpcPrevInputs, mpcInputs, mpcPhiRate * ones(numSteps, 1), v_x * ones(numSteps, 1), R * ones(numSteps, 1)];
+
+end
+
+% mpcDesigner(errorModel)
 
 % for i = 1:N
 %     output(i, :) = C * controllerState.Plant;

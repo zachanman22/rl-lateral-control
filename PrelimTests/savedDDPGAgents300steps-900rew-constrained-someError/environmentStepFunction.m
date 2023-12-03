@@ -115,25 +115,21 @@ else
     
     % Penalize sinusoidal lateral error by penalizing the lateral error
     % crossing the zero line
-    % if NextState(1) > 0 && State(1) < 0
-    %     overshootReward = -100;
-    % elseif NextState(1) < 0 && State(1) > 0
-    %     overshootReward = -100;
-    % else
-    %     overshootReward = 0;
-    % end
-
-    overshootReward = 0;
+    if NextState(1) > 0 && State(1) < 0
+        overshootReward = -10;
+    elseif NextState(1) < 0 && State(1) > 0
+        overshootReward = -10;
+    else
+        overshootReward = 1;
+    end
     
     % Penalize the lateral error increasing, want it to constantly decrease
     % smoothly
-    % if abs(NextState(1)) > abs(State(1))
-    %     smoothReward = -10;
-    % else
-    %     smoothReward = 1;
-    % end
-
-    smoothReward = 0;
+    if abs(NextState(1)) > abs(State(1))
+        smoothReward = -10;
+    else
+        smoothReward = 1;
+    end
     
     % Want to perform task with minimal action, so penalize larger actions
     actionReward = -(Action / maxSteer) ^ 2;
