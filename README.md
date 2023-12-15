@@ -13,7 +13,8 @@ To run MBPO Training:
 
 To run Imitation Learning:
 
-1. Navigate to the imitation-learning folder and follow the instructions in AIRLLKA.mlx and ImitateMPCControllerForLateralControl.mlx.
+1. Generate expert trajectories with the mpcExpertTest.m file
+2.  Navigate to the imitation-learning folder and follow the instructions in ImitateMPCControllerForLateralControl.mlx.(AIRLLKA.mlx is non-functional).
 
 To simulate the steering dynamics:
 
