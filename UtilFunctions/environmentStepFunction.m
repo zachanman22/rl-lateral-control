@@ -1,6 +1,10 @@
 function [NextObservation,Reward,IsDone,NextState] = environmentStepFunction(Action,State)
 %ENVIRONMENTSTEPFUNCTION Summary of this function goes here
 %   Detailed explanation goes here
+
+% Set to 0 for base reward and 1 for modified reward
+modifiedReward = 1;
+
 Cf = 60000;
 Cr = 60000;
 lf = 1.22;
@@ -66,8 +70,6 @@ nextHeadingError = NextObservation(3);
 
 IsDone = abs(nextLatError) > latErrorThreshold || ...
     abs(nextHeadingError) > headingErrorThreshold;
-
-modifiedReward = 0;
 
 if IsDone
     Reward = -1000;

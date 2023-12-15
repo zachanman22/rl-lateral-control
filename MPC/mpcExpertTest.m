@@ -1,3 +1,10 @@
+numTrajectories = 1000;
+% 1000 steps at 0.01 second time steps = 10 second trajectories
+numSteps = 1000;
+% Sampling period
+Ts = 1e-2;
+trajectories = zeros(numTrajectories, numSteps, 9);
+
 % Vehicle Parameters
 Cf = 60000;
 Cr = 60000;
@@ -6,12 +13,6 @@ lr = 1.62;
 Iz = 2920;
 m = 1590;
 L = 5;
-
-% Sampling period
-Ts = 1e-2;
-
-numTrajectories = 1000;
-trajectories = zeros(numTrajectories, numSteps, 9);
 
 for i = 1:numTrajectories
 v_x = 20 * rand() + 15;
@@ -37,9 +38,6 @@ C = [1, 0, 0, 0;
 
 errorModel = ss(A, B_overall, C, 0);
 errorModel = setmpcsignals(errorModel, MV=1, MD=2);
-
-% 1000 steps at 0.01 second time steps = 10 second trajectories
-numSteps = 1000;
 
 % Maximum steering angle and steering rate (times the time step)
 maxSteer = pi / 6;

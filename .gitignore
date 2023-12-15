@@ -1,3 +1,7 @@
 *.mat
 *.asv
 *.zip
+*.pdf
+!Agent6464.mat
+!Agent6622.mat
+!Agent7701.mat

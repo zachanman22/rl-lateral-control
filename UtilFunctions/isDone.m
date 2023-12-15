@@ -23,7 +23,6 @@ nextLatError = NextObservation(1, :);
 nextHeadingError = NextObservation(3, :);
 
 IsDone = abs(nextLatError) > latErrorThreshold | ...
-    abs(nextHeadingError) > headingErrorThreshold; % || ...
-    % abs(Action - prevAction) > maxSteerRate;
+    abs(nextHeadingError) > headingErrorThreshold;
 
 end

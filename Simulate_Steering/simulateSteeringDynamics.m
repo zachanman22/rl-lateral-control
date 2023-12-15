@@ -1,3 +1,5 @@
+plotTitle = "Agent Performance Example";
+plotDSteer = 0;
 
 Cf = 60000;
 Cr = 60000;
@@ -82,8 +84,6 @@ for i = t
     end
 end
 
-plotDSteer = 0;
-plotTitle = "MBPO Base Reward Performance Example";
 if plotDSteer
     subplot(4,1,1)
     plot(t(1:agentPerfLength), states(1, 1:agentPerfLength))
