@@ -12,15 +12,8 @@ actInfo.Description = 'delta';
 actInfo.LowerLimit = -maxSteer;
 actInfo.UpperLimit = maxSteer;
 
+addpath("../UtilFunctions")
 env = rlFunctionEnv(obsInfo, actInfo, "environmentStepFunction", "environmentResetFunction");
-
-rng(0);
-InitialObs = reset(env)
-
-[NextObs,Reward,IsDone,Info] = step(env,pi/4)
-% [NextObs,Reward,IsDone,Info] = step(env,pi/4)
-% [NextObs,Reward,IsDone,Info] = step(env,pi/4)
-% [NextObs,Reward,IsDone,Info] = step(env,pi/4)
 
 
 %% Create Actor DDPG
@@ -96,11 +89,6 @@ actor = rlContinuousGaussianActor(actorNetwork,obsInfo,actInfo, ...
 criticOptions = rlOptimizerOptions(LearnRate=1e-03,GradientThreshold=1);
 actorOptions = rlOptimizerOptions(LearnRate=5e-04,GradientThreshold=1);
 
-% agentOptions = rlSACAgentOptions(...
-%     SampleTime=1e-2,...
-%     ExperienceBufferLength=1e6,...
-%     MiniBatchSize=128);
-
 agentOptions = rlSACAgentOptions(...
     SampleTime=1e-2,...
     ActorOptimizerOptions=actorOptions,...
@@ -109,13 +97,6 @@ agentOptions = rlSACAgentOptions(...
     MiniBatchSize=128);
 
 agent = rlSACAgent(actor,[critic1 critic2],agentOptions);
-
-% agentOpt = rlDDPGAgentOptions(SampleTime=0.1);
-% agent = rlDDPGAgent(obsinfo, actinfo);
-% agent = rlSACAgent(obsInfo, actInfo);
-% agent.SampleTime = 1e-2;
-
-obsInfo(1)
 
 getAction(agent, rand(obsInfo(1).Dimension))
 

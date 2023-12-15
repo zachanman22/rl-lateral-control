@@ -12,15 +12,8 @@ actInfo.Description = 'delta';
 actInfo.LowerLimit = -maxSteer;
 actInfo.UpperLimit = maxSteer;
 
+addpath("../UtilFunctions")
 env = rlFunctionEnv(obsInfo, actInfo, "environmentStepFunction", "environmentResetFunction");
-
-rng(0);
-InitialObs = reset(env)
-
-[NextObs,Reward,IsDone,Info] = step(env,pi/4)
-% [NextObs,Reward,IsDone,Info] = step(env,pi/4)
-% [NextObs,Reward,IsDone,Info] = step(env,pi/4)
-% [NextObs,Reward,IsDone,Info] = step(env,pi/4)
 
 
 %% Create Actor DDPG
@@ -73,6 +66,19 @@ actorNetwork = dlnetwork(actorNetwork);
 
 actor = rlContinuousDeterministicActor(actorNetwork,obsInfo,actInfo);
 
+% figure(1)
+% plot(layerGraph(actorNetwork))
+% title("Actor Network")
+% xlabel("27k parameters")
+% summary(actorNetwork)
+% analyzeNetwork(actorNetwork)
+% figure(2)
+% plot(layerGraph(criticNetwork))
+% title("Critic Network")
+% xlabel("27.4k parameters")
+% summary(criticNetwork)
+% analyzeNetwork(criticNetwork)
+
 criticOptions = rlOptimizerOptions(LearnRate=1e-03,GradientThreshold=1);
 actorOptions = rlOptimizerOptions(LearnRate=5e-04,GradientThreshold=1);
 
@@ -82,74 +88,13 @@ agentOptions = rlDDPGAgentOptions(...
     CriticOptimizerOptions=criticOptions,...
     ExperienceBufferLength=1e6,...
     MiniBatchSize=128);
-agentOptions.NoiseOptions = rl.option.GaussianActionNoise;
-% agentOptions.NoiseOptions.Variance = 0.4;
-% agentOptions.NoiseOptions.VarianceDecayRate = 1e-5;
+
+agentOptions.NoiseOptions.Variance = 0.4;
+agentOptions.NoiseOptions.VarianceDecayRate = 1e-5;
 
 agent = rlDDPGAgent(actor,critic,agentOptions);
 
-%% Transition Equation Approximation Network
-% Observation and action paths
-obsPath = featureInputLayer(obsInfo.Dimension(1),Name="obsIn");
-actionPath = featureInputLayer(actInfo.Dimension(1),Name="actIn");
-
-% Common path: concatenate along dimension 1
-commonPath = [concatenationLayer(1,2,Name="concat")
-    fullyConnectedLayer(128)
-    reluLayer
-    fullyConnectedLayer(128)
-    reluLayer
-    fullyConnectedLayer(obsInfo.Dimension(1),Name="nextObsOut")];
-
-% Add layers to layerGraph object
-transNet = layerGraph(obsPath);
-transNet = addLayers(transNet,actionPath);
-transNet = addLayers(transNet,commonPath);
-
-% Connect layers
-transNet = connectLayers(transNet,"obsIn","concat/in1");
-transNet = connectLayers(transNet,"actIn","concat/in2");
-
-% Convert to dlnetwork object
-transNet = dlnetwork(transNet);
-
-% Display number of weights
-% summary(transNet)
-
-transitionFcnAppx = rlContinuousDeterministicTransitionFunction( ...
-    transNet,obsInfo,actInfo,...
-    ObservationInputNames="obsIn",...
-    ActionInputNames="actIn",...
-    NextObservationOutputNames="nextObsOut");
-
-rewardFunction = @rewardFcn;
-isDoneFunction = @isDone;
-
-generativeEnv = rlNeuralNetworkEnvironment(obsInfo, actInfo, transitionFcnAppx, rewardFunction, isDoneFunction);
-
-
-transitionOptimizerOptions = rlOptimizerOptions(...
-    LearnRate=1e-4,...
-    GradientThreshold=1.0);
-
-agentOptions = rlMBPOAgentOptions(...
-    MiniBatchSize=128, ...
-    ModelExperienceBufferLength=1e6,...
-    RealSampleRatio=0.2, ...
-    TransitionOptimizerOptions=transitionOptimizerOptions);
-
-agentOptions.ModelRolloutOptions.NoiseOptions = rl.option.GaussianActionNoise;
-
-agent = rlMBPOAgent(agent, generativeEnv, agentOptions);
 %%
-% agentOpt = rlDDPGAgentOptions(SampleTime=0.1);
-% agent = rlDDPGAgent(obsinfo, actinfo);
-% agent = rlSACAgent(obsInfo, actInfo);
-% agent.SampleTime = 1e-2;
-
-obsInfo(1)
-
-getAction(agent, rand(obsInfo(1).Dimension))
 
 opt = rlTrainingOptions(...
     MaxEpisodes=10000,...

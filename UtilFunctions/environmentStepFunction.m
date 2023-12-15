@@ -30,25 +30,12 @@ B_dist = [0;
 maxSteer = pi / 6;
 maxSteerRate = pi / 3 * Ts;
 
-% if ~(Action <= maxSteer && Action >= -maxSteer)
-%     error('Action must be between %g and %g.',...
-%         -maxSteer,maxSteer);
-% end
-
-% Won't consider max steer rate
-
 % Lateral error for which to fail the episode
 latErrorThreshold = 1.5;
 % Heading error for which to fail the episode
 headingErrorThreshold = pi / 2;
 
 NextState = zeros(7,1);
-
-% Compute integral of lateral error
-% NextState(5) = State(5) + State(1);
-
-% Compute integral of heading error
-% NextState(6) = State(6) + State(2);
 
 % Maintain same longitudinal speed
 NextState(6) = v_x;
@@ -78,11 +65,9 @@ nextLatError = NextObservation(1);
 nextHeadingError = NextObservation(3);
 
 IsDone = abs(nextLatError) > latErrorThreshold || ...
-    abs(nextHeadingError) > headingErrorThreshold; % || ...
-    % abs(Action - prevAction) > maxSteerRate;
+    abs(nextHeadingError) > headingErrorThreshold;
 
-% IsDone = abs(nextLatError) > latErrorThreshold;
-% IsDone = false;
+modifiedReward = 0;
 
 if IsDone
     Reward = -1000;
@@ -104,60 +89,40 @@ else
         headingErrorReward = 0;
     end
     
-    % % If difference between the requested action and the prev action has a
-    % % magnitude greater than the max steering rate, penalize
-    % if abs(Action - prevAction) > maxSteerRate
-    %     maxSteerReward = -100;
-    % else 
-    %     maxSteerReward = 0;
-    % end
-    maxSteerReward = 0;
-    
     % Penalize sinusoidal lateral error by penalizing the lateral error
     % crossing the zero line
-    % if NextState(1) > 0 && State(1) < 0
-    %     overshootReward = -100;
-    % elseif NextState(1) < 0 && State(1) > 0
-    %     overshootReward = -100;
-    % else
-    %     overshootReward = 0;
-    % end
-
-    overshootReward = 0;
+    if modifiedReward
+        if NextState(1) > 0 && State(1) < 0
+        overshootReward = -100;
+        elseif NextState(1) < 0 && State(1) > 0
+            overshootReward = -100;
+        else
+            overshootReward = 0;
+        end
+    else
+        overshootReward = 0;
+    end
+    
     
     % Penalize the lateral error increasing, want it to constantly decrease
     % smoothly
-    % if abs(NextState(1)) > abs(State(1))
-    %     smoothReward = -10;
-    % else
-    %     smoothReward = 1;
-    % end
-
-    smoothReward = 0;
+    if modifiedReward
+        if abs(NextState(1)) > abs(State(1))
+            smoothReward = -10;
+        else
+            smoothReward = 1;
+        end
+    else
+        smoothReward = 0;
+    end
+    
     
     % Want to perform task with minimal action, so penalize larger actions
     actionReward = -(Action / maxSteer) ^ 2;
 
     % Reward = (lateralErrorReward + headingErrorReward) * Ts;
-    Reward = lateralErrorReward + headingErrorReward + actionReward + overshootReward + smoothReward + maxSteerReward;
+    Reward = lateralErrorReward + headingErrorReward + actionReward + overshootReward + smoothReward;
 end
-
-% if IsDone
-%     Reward = -100;
-% else
-%     if nextLatError ^ 2 < 0.001
-%         lateralErrorReward = 2;
-%     else
-%         lateralErrorReward = 0;
-%     end
-% 
-%     if nextHeadingError ^ 2 < 0.001
-%         headingErrorReward = 1;
-%     else
-%         headingErrorReward = 0;
-%     end
-%     Reward = (0.1 + lateralErrorReward + headingErrorReward);
-% end
 
 end
 
